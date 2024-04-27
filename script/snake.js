@@ -1,9 +1,10 @@
-import { gameBoard, checkFood } from './game.js';
+import { gameBoard, onFoodTouched } from './game.js';
 
 export class Snake {
+  // snakePieces[0] is alwayes the head of the snake.
   #snakePieces = [];
-  #gameIntervalId = null;
-  #speed = 150;
+  #speedIntervalId = null;
+  #speedInterval = 160;
 
   get headX() {
     return this.#snakePieces[0].x;
@@ -13,101 +14,131 @@ export class Snake {
     return this.#snakePieces[0].y;
   }
 
-  addSnakePiec() {
-    const piecEl = document.createElement('div');
-    const piecNum = this.#snakePieces.length;
+  addNewPiece() {
+    const pieceEl = document.createElement('div');
+    const pieceNum = this.#snakePieces.length;
 
-    if (piecNum === 0)
-      piecEl.classList.add('snake-head');
+    if (pieceNum === 0)
+      pieceEl.classList.add('snake-head');
     else
-      piecEl.classList.add('snake-tale');
+      pieceEl.classList.add('snake-tale');
 
-    const piec = {
-      element: piecEl,
-      x: 3,
-      y: 11,
-      updatePositon: (a, b) => {
-        if (piecNum === 0) {
-          piec.x += a;
-          piec.y += b;
+    const snakePiece = {
+      element: pieceEl,
+      num: pieceNum,
+      // The initial position on the gameBoard.
+      x: 1,
+      y: 1,
+      updatePositon: (stepX, stepY) => {
+        if (snakePiece.num === 0) {
+          snakePiece.x += stepX;
+          snakePiece.y += stepY;
         } else {
-          piec.x = this.#snakePieces[piecNum - 1].x;
-          piec.y = this.#snakePieces[piecNum - 1].y;
-          piecEl.style.display = 'block';
+          snakePiece.x = this.#snakePieces[snakePiece.num - 1].x;
+          snakePiece.y = this.#snakePieces[snakePiece.num - 1].y;
         }
-        piecEl.style.gridArea = `${piec.y}/${piec.x}`;
+        pieceEl.style.setProperty('--x', snakePiece.x);
+        pieceEl.style.setProperty('--y', snakePiece.y);
+        pieceEl.style.display = 'flex';
       }
     }
 
-    gameBoard.appendChild(piecEl);
-    this.#snakePieces.push(piec);
-    this.#snakePieces[0].updatePositon(0, 0);
+    gameBoard.appendChild(pieceEl);
+    this.#snakePieces.push(snakePiece);
   }
 
-  moveSnake(direction) {
-    let x = 0, y = 0;
+  handleArrowKeysInput() {
+    window.addEventListener('keyup', (event) => {
+      let stepX = 0, stepY = 0;
 
-    switch (direction) {
-      case 'ArrowUp':
-        y = -1;
-        break;
-      case 'ArrowDown':
-        y = 1;
-        break;
-      case 'ArrowRight':
-        x = 1;
-        break;
-      case 'ArrowLeft':
-        x = -1;
-    }
-
-    if (this.#gameIntervalId)
-      clearInterval(this.#gameIntervalId);
-
-    this.#gameIntervalId = setInterval(() => {
-      for (let i = this.#snakePieces.length - 1; i >= 0; i--) {
-        this.#snakePieces[i].updatePositon(x, y);
+      switch (event.key) {
+        case 'ArrowUp':
+          stepY = -2;
+          break;
+        case 'ArrowDown':
+          stepY = 2;
+          break;
+        case 'ArrowRight':
+          stepX = 2;
+          break;
+        case 'ArrowLeft':
+          stepX = -2;
       }
-      this.checkState();
-    }, this.#speed);
+
+      this.moveSnake(stepX, stepY);
+    });
   }
 
-  checkState() {
-    checkFood();
+  moveSnake(stepX, stepY) {
+    if (this.#speedIntervalId)
+      clearInterval(this.#speedIntervalId);
 
+    this.#speedIntervalId = setInterval(() => {
+      for (let i = this.#snakePieces.length - 1; i >= 0; i--)
+        this.#snakePieces[i].updatePositon(stepX, stepY);
+
+      this.manageCurrentState();
+    }, this.#speedInterval);
+  }
+
+  manageCurrentState() {
+
+    onFoodTouched();
+
+    // Reset the game if hit a wall.
     if (this.headX < 1 || this.headY < 1
-      || this.headX > 21 || this.headY > 21)
+      || this.headX > 41 || this.headY > 41) {
       this.resetGame();
+      this.showMessage(100);
+    }
 
+    // Reset the game if hit self.
     for (let i = 1, ln = this.#snakePieces.length; i < ln; i++)
       if (this.headX === this.#snakePieces[i].x
         && this.headY === this.#snakePieces[i].y) {
         this.resetGame();
+        this.showMessage(101);
         break;
       }
   }
 
-  resetGame() {
-    clearInterval(this.#gameIntervalId);
+  toggelSnakeSpeed() {
+    this.#speedInterval -= 40;
+    if (this.#speedInterval < 80)
+      this.#speedInterval = 160;
+    return this.#speedInterval;
+  }
 
-    this.#snakePieces[0].x = 3;
-    this.#snakePieces[0].y = 11;
+  showMessage(code) {
+    let msg = '';
+
+    // Message codes:
+    // 100: hit the wall.
+    // 101: hit self.
+
+    switch (code) {
+      case 100:
+        msg = 'You hit the wall!';
+        break;
+      case 101:
+        msg = 'You hit your self!';
+    }
+
+    alert(msg);
+  }
+
+  resetGame() {
+    clearInterval(this.#speedIntervalId);
+
+    this.#snakePieces[0].x = 1;
+    this.#snakePieces[0].y = 1;
     this.#snakePieces[0].updatePositon(0, 0);
 
     for (let i = 1, ln = this.#snakePieces.length; i < ln; i++)
       gameBoard.removeChild(this.#snakePieces[i].element);
 
+    // Keep only the head in the array
     this.#snakePieces.splice(1);
-
-    alert('You hit the wall!');
-  }
-
-  toggleSpeed() {
-    this.#speed -= 40;
-    if (this.#speed < 70)
-      this.#speed = 150;
-
-    console.log(this.#speed);
   }
 }
 

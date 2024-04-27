@@ -2,6 +2,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  color: rgb(225, 225, 225);
+}
+
+:root {
+  --radius: calc(4vmin / 2);
+  --duration: 140ms;
 }
 
 body {
@@ -9,33 +15,82 @@ body {
   width: 100vw;
   height: 100vh;
   align-items: center;
-  justify-content: center;
   background-color: rgb(3, 22, 44);
 }
 
+.game-controls-container,
+.game-board-container {
+  display: flex;
+  width: auto;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.game-controls-container {
+  flex-direction: column;
+  width: 40%;
+}
+
+
+.difficulty-btn {
+  --bg-color: #299a52;
+  display: block;
+  width: 70px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--bg-color);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.difficulty-btn:hover {
+  filter: brightness(90%);
+}
+
+
 .game-board {
-  display: grid;
-  grid-template-columns: repeat(21, 1fr);
-  grid-template-rows: repeat(21, 1fr);
-  width: 100vmin;
-  height: 100vmin;
+  display: flex;
+  width: calc(var(--radius) *42);
+  height: calc(var(--radius) *42);
+  position: relative;
   background-color: rgb(25, 149, 137);
+  border-radius: 10px;
+}
+
+.snake-head,
+.snake-tale,
+.food {
+  --x: 1;
+  --y: 1;
+  width: calc(var(--radius) * 2);
+  height: calc(var(--radius) * 2);
+  position: absolute;
+  transform: translate(-50%, -50%);
+  top: calc(var(--radius) * var(--y));
+  left: calc(var(--radius) * var(--x));
+  transition: left var(--duration) linear, top var(--duration) linear;
 }
 
 .snake-head {
   background-color: rgb(28, 80, 158);
   border-radius: 50%;
-  z-index: 100;
+  z-index: 3;
 }
 
 .snake-tale {
+  /* Tale pieces are displayed only after calculating there position on the snake */
   display: none;
   background-color: rgb(212, 61, 81);
-  border-radius: 10px;
-  text-align: center;
+  border-radius: 5px;
+  z-index: 2;
 }
 
 .food {
   background-color: rgb(255, 230, 0);
-  border-radius: 10px;
+  border-radius: 5px;
+  z-index: 1;
 }
